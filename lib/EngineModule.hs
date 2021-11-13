@@ -22,7 +22,9 @@ module EngineModule
 , drawCoord
 , displayMessage
 , tuplesSum
-, moveObject)
+, moveObject
+, isInBounds
+, drawColored)
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -35,7 +37,7 @@ import Graphics.Gloss
       makeColorI,
       Display(InWindow),
       Color,
-      Picture(Text, Color, Pictures, Scale) )
+      Picture(Text, Color, Pictures, Scale), color )
 
 type X = Int
 type Y = Int
@@ -45,9 +47,10 @@ type Direction = Coord
 getRandomNumberInRange :: StdGen -> Int -> Int -> (Int, StdGen)
 getRandomNumberInRange stdGen l u = randomR (l, u) stdGen
 
-screenGreen, screenGray :: Color
+screenGreen, screenGray, screenBlue :: Color
 screenGreen = makeColorI 0x6F 0x77 0x5F 0xFF
 screenGray  = makeColorI 0x64 0x6F 0x5D 0XFF
+screenBlue  = makeColorI 0x37 0xA3 0xBB 0xFF
 
 width :: X
 width   = 10 -- de breedte van het bord
@@ -84,6 +87,9 @@ filled = Scale fscale fscale $ Pictures[rectangleWire dwidth dwidth,rectangleSol
 empty :: Picture
 empty = Color screenGray filled
 
+coloredTile :: Picture
+coloredTile = Color screenBlue filled
+
 -- Maakt een rij van lege pixels
 makeRow :: Y -> Picture
 makeRow y = pictures[drawEmpty (x, y) | x <- [left..right]]
@@ -104,6 +110,9 @@ drawCoord c = drawPicture c filled
 drawEmpty :: Coord -> Picture
 drawEmpty c = drawPicture c empty
 
+drawColored :: Coord -> Picture
+drawColored c = drawPicture c coloredTile
+
 -- Hulpfunctie die gebruikt wordt om zowel tegels als gevulde pixels mee te tekenen
 drawPicture :: Coord -> Picture -> Picture
 drawPicture c = translate (adjustSize $ fst c) (adjustSize $ snd c)
@@ -118,3 +127,7 @@ tuplesSum (x, y) (x', y') = (x + x', y + y')
 -- Beweegt een object in de gegeven richting
 moveObject :: [Coord] -> Direction -> [Coord]
 moveObject o d = tuplesSum (head o) d : init [x | x <- o]
+
+-- Kijkt of een coordinaat op het veld ligt
+isInBounds :: Coord -> Bool
+isInBounds (x, y) = x >= left && x <= right && y >= bottom && y <= top
