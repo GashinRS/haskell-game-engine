@@ -21,7 +21,8 @@ module EngineModule
 , adjustSize
 , drawCoord
 , displayMessage
-, tuplesSum)
+, tuplesSum
+, moveObject)
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -113,3 +114,7 @@ displayMessage m = Scale 0.5 0.5 $ translate (adjustSize (-width)) 0 $ Text m
 -- Geeft de som van de elementen van 2 tuples terug
 tuplesSum :: Coord -> Direction -> Coord
 tuplesSum (x, y) (x', y') = (x + x', y + y')
+
+-- Beweegt een object in de gegeven richting
+moveObject :: [Coord] -> Direction -> [Coord]
+moveObject o d = tuplesSum (head o) d : init [x | x <- o]

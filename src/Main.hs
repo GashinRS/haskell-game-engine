@@ -36,12 +36,13 @@ data Game
               random :: (Int, StdGen)
             }
   | GameOver {
-              random :: (Int, StdGen)
+              random :: (Int, StdGen),
+              score :: Int
             }
 
 gamePic :: Game -> Picture
 gamePic (Playing p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
-gamePic (GameOver r) = displayMessage "Game Over!"
+gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
 
 -- Geeft alle mogelijke coordinaten terug van het bord
 getBoardCoordinates :: [Coord]
@@ -89,16 +90,12 @@ lengthenSnake d p
   | length p == 1              = p ++ [tuplesSum l $ getOppositeDirection d]
     where l = last p
 
--- Beweegt een object in de gegeven richting
-moveObject :: [Coord] -> Direction -> [Coord]
-moveObject o d = tuplesSum (head o) d : init [x | x <- o]
-
 next :: Float -> Game -> Game
 next f (Playing p d a r)
-  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r
+  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r $ length p - 1
   | a == head p                                                                        = getNewAppleLocation (Playing (lengthenSnake d p) d a r)
   | otherwise                                                                          = Playing (moveObject p d) d a r
-next t (GameOver r)                                                                    = GameOver r
+next t (GameOver r s)                                                                  = GameOver r s
 
 -- F5 wordt gebruikt om het spel opnieuw te starten
 move :: Event -> Game -> Game
@@ -106,7 +103,7 @@ move (EventKey (SpecialKey KeyLeft) Down _ _) (Playing p d a r)  = Playing p (pr
 move (EventKey (SpecialKey KeyRight) Down _ _) (Playing p d a r) = Playing p (preventOppositeDirection east d) a r
 move (EventKey (SpecialKey KeyDown) Down _ _) (Playing p d a r)  = Playing p (preventOppositeDirection south d) a r
 move (EventKey (SpecialKey KeyUp) Down _ _) (Playing p d a r)    = Playing p (preventOppositeDirection north d) a r
-move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r)        = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
+move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s)      = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
 move _ g                                                         = g
 
 startGame :: (Int, StdGen) -> Game
