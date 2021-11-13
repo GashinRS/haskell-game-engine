@@ -7,7 +7,8 @@ library
   default-language: Haskell2010
   build-depends: base >= 4.14.3.0 && < 4.15
                , gloss >= 1.13.2.1 && < 1.14
-  exposed-modules: VoorbeeldModule
+               , random == 1.2.0
+  exposed-modules: EngineModule
 
 executable engine
   main-is: Main.hs
@@ -15,4 +16,5 @@ executable engine
   default-language: Haskell2010
   build-depends: base >= 4.14.3.0 && < 4.15
                , gloss >= 1.13.2.1 && < 1.14
+               , random == 1.2.0
                , engine
