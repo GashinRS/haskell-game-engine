@@ -19,7 +19,9 @@ module EngineModule
 , filled
 , emptyBoard
 , adjustSize
-, drawCoord)
+, drawCoord
+, displayMessage
+, tuplesSum)
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -104,3 +106,10 @@ drawEmpty c = drawPicture c empty
 -- Hulpfunctie die gebruikt wordt om zowel tegels als gevulde pixels mee te tekenen
 drawPicture :: Coord -> Picture -> Picture
 drawPicture c = translate (adjustSize $ fst c) (adjustSize $ snd c)
+
+displayMessage :: String -> Picture
+displayMessage m = Scale 0.5 0.5 $ translate (adjustSize (-width)) 0 $ Text m
+
+-- Geeft de som van de elementen van 2 tuples terug
+tuplesSum :: Coord -> Direction -> Coord
+tuplesSum (x, y) (x', y') = (x + x', y + y')

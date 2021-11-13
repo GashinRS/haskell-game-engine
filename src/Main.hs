@@ -43,9 +43,6 @@ gamePic :: Game -> Picture
 gamePic (Playing p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
 gamePic (GameOver r) = displayMessage "Game Over!"
 
-displayMessage :: String -> Picture
-displayMessage m = Scale 0.5 0.5 $ translate (adjustSize (-width)) 0 $ Text m
-
 -- Geeft alle mogelijke coordinaten terug van het bord
 getBoardCoordinates :: [Coord]
 getBoardCoordinates = [(x, y) | x <- [left..right],
@@ -62,11 +59,6 @@ getNewAppleLocation (Playing p d a r) = Playing p d a' r'
                                             possible = getPossibleAppleLocations p
                                             r' = getRandomNumberInRange (snd r) 0 $ length possible
                                             a' = possible !! fst r'
-
-
--- Geeft de som van de elementen van 2 tuples terug
-tuplesSum :: Coord -> Direction -> Coord
-tuplesSum (x, y) (x', y') = (x + x', y + y')
 
 -- Kijkt of een coordinaat op het veld ligt
 isInBounds :: Coord -> Bool
@@ -97,11 +89,15 @@ lengthenSnake d p
   | length p == 1              = p ++ [tuplesSum l $ getOppositeDirection d]
     where l = last p
 
+-- Beweegt een object in de gegeven richting
+moveObject :: [Coord] -> Direction -> [Coord]
+moveObject o d = tuplesSum (head o) d : init [x | x <- o]
+
 next :: Float -> Game -> Game
 next f (Playing p d a r)
-  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r -- slang raakt de muur of zichzelf
+  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r
   | a == head p                                                                        = getNewAppleLocation (Playing (lengthenSnake d p) d a r)
-  | otherwise                                                                          = Playing (tuplesSum (head p) d : init p) d a r
+  | otherwise                                                                          = Playing (moveObject p d) d a r
 next t (GameOver r)                                                                    = GameOver r
 
 -- F5 wordt gebruikt om het spel opnieuw te starten
