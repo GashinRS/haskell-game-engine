@@ -41,11 +41,14 @@ import EngineModule
       drawColored,
       Game(Frogger, GameOver), Coord, tuplesSum )
 
+maxScore :: Int 
+maxScore = 100
+
 startGame :: (Int, StdGen) -> Game
-startGame = Frogger (0, bottom) [(0,0)]
+startGame = Frogger (0, bottom) [[(0,0)]] 0
 
 gamePic :: Game -> Picture
-gamePic (Frogger p l r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- l], drawColored p]
+gamePic (Frogger p c t r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- head c], drawColored p]
 --gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
 
 -- Neemt een coordinaat en een richting en beweegt het coordinaat in de gegeven richting.
@@ -55,17 +58,29 @@ moveInBounds o d
   | let n = tuplesSum o d, isInBounds n = n
   | otherwise    = o
 
+atTop :: Coord -> Bool 
+atTop c 
+  | snd c == top = True
+  | otherwise    = False 
+
+calculateScore :: Int -> Int
+calculateScore s 
+  | s > maxScore   = 0
+  | otherwise = maxScore - s
+
 -- F5 wordt gebruikt om het spel opnieuw te starten
 move :: Event -> Game -> Game
-move (EventKey (SpecialKey KeyLeft) Down _ _) (Frogger p l r)  = Frogger (moveInBounds p west) l r
-move (EventKey (SpecialKey KeyRight) Down _ _) (Frogger p l r) = Frogger (moveInBounds p east) l r
-move (EventKey (SpecialKey KeyDown) Down _ _) (Frogger p l r)  = Frogger (moveInBounds p south) l r
-move (EventKey (SpecialKey KeyUp) Down _ _) (Frogger p l r)    = Frogger (moveInBounds p north) l r
-move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s)    = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
-move _ g                                                       = g
+move (EventKey (SpecialKey KeyLeft) Down _ _) (Frogger p c t r)  = Frogger (moveInBounds p west) c t r
+move (EventKey (SpecialKey KeyRight) Down _ _) (Frogger p c t r) = Frogger (moveInBounds p east) c t r
+move (EventKey (SpecialKey KeyDown) Down _ _) (Frogger p c t r)  = Frogger (moveInBounds p south) c t r
+move (EventKey (SpecialKey KeyUp) Down _ _) (Frogger p c t r)    = Frogger (moveInBounds p north) c t r
+move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s)      = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
+move _ g                                                         = g
 
 next :: Float -> Game -> Game
-next f (Frogger p l r) = Frogger p l r
+next f (Frogger p c t r)
+  | atTop p            = GameOver r $ calculateScore t
+  | otherwise          = Frogger p c (t+1) r
 next f (GameOver r s)  = GameOver r s
 
 froggerMain :: IO ()

@@ -12,6 +12,10 @@ module EngineModule
 , east
 , south
 , west
+, northEast
+, northWest
+, southEast
+, southWest
 , bottom
 , top
 , left
@@ -25,7 +29,8 @@ module EngineModule
 , moveObject
 , isInBounds
 , drawColored
-, Game (Frogger, Snake, GameOver, Menu))
+, allDirections
+, Game (Frogger, Snake, Tanks, GameOver, Menu))
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -46,7 +51,8 @@ type Coord = (X, Y)
 type Direction = Coord
 
 data Game = Frogger { frog :: Coord,
-                      logs :: [Coord],
+                      cars :: [[Coord]],
+                      time :: Int,
                       random :: (Int, StdGen)
                     }
             | Snake { snake :: [Coord],
@@ -54,6 +60,13 @@ data Game = Frogger { frog :: Coord,
               apple :: Coord,
               random :: (Int, StdGen)
                     }
+            | Tanks { tank :: Coord, --center coordinaat van de tank
+                  tdirection :: Direction, 
+                  enemies :: [Coord],
+                  edirections :: [Direction],
+                  bullets :: [Coord],
+                  bdirections :: [Direction],
+                  random :: (Int, StdGen)}
             | GameOver  {
                         random :: (Int, StdGen),
                         score :: Int
@@ -89,6 +102,17 @@ south :: Direction
 south = (0, -1)
 west :: Direction
 west = (-1, 0)
+northEast :: Direction
+northEast = (1, 1)
+southEast :: Direction
+southEast = (1, -1)
+southWest :: Direction
+southWest = (-1, -1)
+northWest :: Direction
+northWest = (-1, 1)
+
+allDirections :: [Coord]
+allDirections = [north, east, south, west, northEast, southEast, southWest, northWest]
 
 bottom, top :: Y
 left, right :: X
