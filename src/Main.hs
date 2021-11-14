@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
@@ -53,6 +54,3 @@ main  = do
              gamePic -- de 'render'-functie, om naar scherm te tekenen
              move -- de 'handle'-functie, om gebruiksinvoer te verwerken
              next -- de 'step'-functie, om 1 tijdstap te laten passeren
--- main = Snake.snakeMain
--- main = Frogger.froggerMain
--- main = Tanks.tanksMain
