@@ -1,28 +1,44 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Snake (
-  snakeMain
+    snakeMain,
+    gamePic,
+    move,
+    next,
+    startGame
 ) where
 
 import Data.List
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
+    ( KeyState(Down),
+      SpecialKey(KeyF5, KeyLeft, KeyRight, KeyDown, KeyUp),
+      Key(SpecialKey),
+      Event(EventKey) )
 import Text.ParserCombinators.ReadPrec (prec)
 import System.Random (StdGen, getStdGen, randomR)
 import EngineModule
+    ( Game(Snake, GameOver),
+      Direction,
+      Coord,
+      getRandomNumberInRange,
+      screenGreen,
+      width,
+      height,
+      north,
+      east,
+      south,
+      west,
+      bottom,
+      top,
+      left,
+      right,
+      emptyBoard,
+      drawCoord,
+      displayMessage,
+      tuplesSum,
+      moveObject,
+      isInBounds)
 
-data Game
-  = Playing { player :: [Coord],
-              direction :: Direction,
-              apple :: Coord,
-              random :: (Int, StdGen)
-            }
-  | GameOver {
-              random :: (Int, StdGen),
-              score :: Int
-            }
-
-gamePic :: Game -> Picture
-gamePic (Playing p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
-gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
 
 -- Geeft alle mogelijke coordinaten terug van het bord
 getBoardCoordinates :: [Coord]
@@ -35,7 +51,7 @@ getPossibleAppleLocations p = getBoardCoordinates \\ p
 
 -- Geeft de game terug waarin het coordinaat van de appel werd geupdate alsook de random generator
 getNewAppleLocation :: Game -> Game
-getNewAppleLocation (Playing p d a r) = Playing p d a' r'
+getNewAppleLocation (Snake p d a r) = Snake p d a' r'
                                           where
                                             possible = getPossibleAppleLocations p
                                             r' = getRandomNumberInRange (snd r) 0 $ length possible
@@ -69,24 +85,28 @@ lengthenSnake d p
     where l = last p
 lengthenSnake d p = p --default waarde die normaal gezien nooit zal voorkomen
 
-next :: Float -> Game -> Game
-next f (Playing p d a r)
-  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r $ length p - 1
-  | a == head p                                                                        = getNewAppleLocation (Playing (lengthenSnake d p) d a r)
-  | otherwise                                                                          = Playing (moveObject p d) d a r
-next t (GameOver r s)                                                                  = GameOver r s
+startGame :: (Int, StdGen) -> Game
+startGame r = Snake [(0, 0)] north (getBoardCoordinates !! fst r ) r
+
+gamePic :: Game -> Picture
+gamePic (Snake p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
+--gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
 
 -- F5 wordt gebruikt om het spel opnieuw te starten
 move :: Event -> Game -> Game
-move (EventKey (SpecialKey KeyLeft) Down _ _) (Playing p d a r)  = Playing p (preventOppositeDirection west d) a r
-move (EventKey (SpecialKey KeyRight) Down _ _) (Playing p d a r) = Playing p (preventOppositeDirection east d) a r
-move (EventKey (SpecialKey KeyDown) Down _ _) (Playing p d a r)  = Playing p (preventOppositeDirection south d) a r
-move (EventKey (SpecialKey KeyUp) Down _ _) (Playing p d a r)    = Playing p (preventOppositeDirection north d) a r
+move (EventKey (SpecialKey KeyLeft) Down _ _) (Snake p d a r)    = Snake p (preventOppositeDirection west d) a r
+move (EventKey (SpecialKey KeyRight) Down _ _) (Snake p d a r)   = Snake p (preventOppositeDirection east d) a r
+move (EventKey (SpecialKey KeyDown) Down _ _) (Snake p d a r)    = Snake p (preventOppositeDirection south d) a r
+move (EventKey (SpecialKey KeyUp) Down _ _) (Snake p d a r)      = Snake p (preventOppositeDirection north d) a r
 move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s)      = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
 move _ g                                                         = g
 
-startGame :: (Int, StdGen) -> Game
-startGame r = Playing [(0, 0)] north (getBoardCoordinates !! fst r ) r
+next :: Float -> Game -> Game
+next f (Snake p d a r)
+  | let newHead = tuplesSum (head p) d in not (isInBounds newHead) || newHead `elem` p = GameOver r $ length p - 1
+  | a == head p                                                                        = getNewAppleLocation (Snake (lengthenSnake d p) d a r)
+  | otherwise                                                                          = Snake (moveObject p d) d a r
+next t (GameOver r s)                                                                  = GameOver r s
 
 snakeMain :: IO ()
 snakeMain  = do

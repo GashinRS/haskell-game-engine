@@ -24,7 +24,8 @@ module EngineModule
 , tuplesSum
 , moveObject
 , isInBounds
-, drawColored)
+, drawColored
+, Game (Frogger, Snake, GameOver, Menu))
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -43,6 +44,22 @@ type X = Int
 type Y = Int
 type Coord = (X, Y)
 type Direction = Coord
+
+data Game = Frogger { frog :: Coord,
+                      logs :: [Coord],
+                      random :: (Int, StdGen)
+                    }
+            | Snake { snake :: [Coord],
+              direction :: Direction,
+              apple :: Coord,
+              random :: (Int, StdGen)
+                    }
+            | GameOver  {
+                        random :: (Int, StdGen),
+                        score :: Int
+                        }
+            | Menu   {game :: Int, 
+                      random :: (Int, StdGen)}
 
 getRandomNumberInRange :: StdGen -> Int -> Int -> (Int, StdGen)
 getRandomNumberInRange stdGen l u = randomR (l, u) stdGen
