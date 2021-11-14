@@ -30,7 +30,9 @@ module EngineModule
 , isInBounds
 , drawColored
 , allDirections
-, Game (Frogger, Snake, Tanks, GameOver, Menu))
+, Game (Frogger, Snake, Tanks, GameOver, Menu)
+, Bullet (TankBullet)
+, Tank (Tank))
  where
 
 import System.Random (StdGen, getStdGen, randomR)
@@ -60,12 +62,12 @@ data Game = Frogger { frog :: Coord,
               apple :: Coord,
               random :: (Int, StdGen)
                     }
-            | Tanks { tank :: Coord, --center coordinaat van de tank
-                  tdirection :: Direction, 
-                  enemies :: [Coord],
-                  edirections :: [Direction],
-                  bullets :: [Coord],
-                  bdirections :: [Direction],
+            | Tanks { tank :: Tank, --center coordinaat van de tank
+                  --tdirection :: Direction, 
+                  enemies :: [Tank],
+                  --edirections :: [Direction],
+                  bullets :: [Bullet],
+                  --bdirections :: [Direction],
                   random :: (Int, StdGen)}
             | GameOver  {
                         random :: (Int, StdGen),
@@ -73,6 +75,9 @@ data Game = Frogger { frog :: Coord,
                         }
             | Menu   {game :: Int, 
                       random :: (Int, StdGen)}
+
+data Bullet = TankBullet {co :: Coord, dir :: Direction}
+data Tank = Tank {center :: Coord, tdir :: Direction} deriving (Eq)
 
 getRandomNumberInRange :: StdGen -> Int -> Int -> (Int, StdGen)
 getRandomNumberInRange stdGen l u = randomR (l, u) stdGen
