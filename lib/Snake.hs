@@ -96,7 +96,6 @@ move (EventKey (SpecialKey KeyLeft) Down _ _) (Snake p d a r)    = Snake p (prev
 move (EventKey (SpecialKey KeyRight) Down _ _) (Snake p d a r)   = Snake p (preventOppositeDirection east d) a r
 move (EventKey (SpecialKey KeyDown) Down _ _) (Snake p d a r)    = Snake p (preventOppositeDirection south d) a r
 move (EventKey (SpecialKey KeyUp) Down _ _) (Snake p d a r)      = Snake p (preventOppositeDirection north d) a r
-move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s)      = startGame $ getRandomNumberInRange (snd r) 0 $ height*width-1
 move _ g                                                         = g
 
 next :: Float -> Game -> Game
