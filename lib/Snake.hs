@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Snake (
-    snakeMain,
     gamePic,
     move,
     next,
@@ -90,7 +89,6 @@ startGame r = Snake [(0, 0)] north (getBoardCoordinates !! fst r ) r
 
 gamePic :: Game -> Picture
 gamePic (Snake p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
---gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
 
 -- F5 wordt gebruikt om het spel opnieuw te starten
 move :: Event -> Game -> Game
@@ -107,15 +105,3 @@ next f (Snake p d a r)
   | a == head p                                                                        = getNewAppleLocation (Snake (lengthenSnake d p) d a r)
   | otherwise                                                                          = Snake (moveObject p d) d a r
 next t (GameOver r s)                                                                  = GameOver r s
-
-snakeMain :: IO ()
-snakeMain  = do
-        stdGen <- getStdGen
-        let r = getRandomNumberInRange stdGen 0 $ height*width-1
-        play (InWindow "UGent Snake" (500, 800) (10, 10))
-             screenGreen -- de achtergrondkleur
-             2 -- aantal stappen per seconde
-             (startGame r) -- de beginwereld
-             gamePic -- de 'render'-functie, om naar scherm te tekenen
-             move -- de 'handle'-functie, om gebruiksinvoer te verwerken
-             next -- de 'step'-functie, om 1 tijdstap te laten passeren

@@ -32,6 +32,10 @@ module EngineModule
 , allDirections
 , Game (Frogger, Snake, Tanks, GameOver, Menu)
 , Bullet (TankBullet)
+, co
+, dir
+, center
+, tdir
 , Tank (Tank))
  where
 
@@ -62,12 +66,9 @@ data Game = Frogger { frog :: Coord,
               apple :: Coord,
               random :: (Int, StdGen)
                     }
-            | Tanks { tank :: Tank, --center coordinaat van de tank
-                  --tdirection :: Direction, 
+            | Tanks { tank :: Tank,
                   enemies :: [Tank],
-                  --edirections :: [Direction],
                   bullets :: [Bullet],
-                  --bdirections :: [Direction],
                   random :: (Int, StdGen)}
             | GameOver  {
                         random :: (Int, StdGen),

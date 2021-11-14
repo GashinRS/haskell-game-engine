@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Tanks (
-    tanksMain,
     gamePic,
     move,
     next,
@@ -48,21 +47,21 @@ import EngineModule
       Game(Tanks, GameOver),
       Coord,
       Bullet(TankBullet),
+      co,
+      dir,
+      center,
+      tdir,
       Tank(Tank),
       tuplesSum)
+
+totalTanks :: Int 
+totalTanks = 2
 
 tankDirections :: [Direction]
 tankDirections = [north, east, south, west]
 
-test :: Coord -> [Coord]
-test t = fmap (tuplesSum t) allDirections
-
 getTankCoordinates :: Tank -> [Coord]
 getTankCoordinates t = fmap (tuplesSum $ center t) (removeWindDirections $ tdir t) ++ [center t]
-
--- Dit geeft alle coordinaten terug rond het centrum van een tank
--- getTankCollisionZone :: Tank -> [Coord]
--- getTankCollisionZone t = fmap (tuplesSum $ center t) allDirections ++ [center t]
 
 removeWindDirections :: Direction -> [Direction]
 removeWindDirections d
@@ -78,48 +77,42 @@ getEnemyTankCoordinates ts = concat [getTankCoordinates t | t <- ts]
 tankHead :: Coord -> Direction -> Coord
 tankHead = tuplesSum
 
--- Schiet een kogel in de gegeven richting
-shootBullet :: Tank -> Coord
-shootBullet t = tuplesSum (tankHead (center t) $ tdir t) $ tdir t
+-- Laat een tank een kogel schieten
+shootBullet :: Tank -> Bullet
+shootBullet t = TankBullet (tuplesSum (tankHead (center t) $ tdir t) $ tdir t) $ tdir t
 
+-- laat misschien een tank een kogel schieten
+maybeShootBullet :: [Tank] -> (Int, StdGen) -> [Bullet]
+maybeShootBullet ts r
+    | n `mod` 3 == 0 = [shootBullet i] -- 33% kans om een kogel te schieten
+    | otherwise      = []
+        where n = fst $ getRandomNumberInRange (snd r) 0 30
+              i = ts !! fst r
+
+-- Checkt of een tank bots met de andere tanks op het veld
 noTankCollision :: Tank -> [Tank] -> Bool
 noTankCollision t ts = null $ getTankCoordinates t `intersect` concat [getTankCoordinates t' | t' <- ts]
-
--- moveTank :: Coord -> Direction -> [Coord] -> Coord
--- moveTank t d ts
---     | let n = tuplesSum t d
---           tc = getTankCoordinates n d
---           ts' = delete t ts, all isInBounds tc && noTankCollision n ts' = n
---     | otherwise                                                         = t
 
 moveTank :: Tank -> Direction -> [Tank] -> Tank
 moveTank t d ts
     | let n   = Tank (tuplesSum (center t) d) d
           tc  = getTankCoordinates n
-          ts' = delete t ts, 
+          ts' = delete t ts,
             all isInBounds tc && noTankCollision n ts' = n
     | otherwise                                        = Tank (center t) d
 
--- Argumenten in volgorde: coordinaat van de speler, coordinaat van de vijanden, de richtingen van de vijanden
--- Coordinaat van de speler moet meegegeven worden om collision te voorkomen tussen de vijanden en de speler
--- moveTanks :: Coord -> [Coord] -> [Direction] -> [Coord]
--- moveTanks t ts ds = [moveTank (ts !! x) (ds !! x) (t:ts) | x <- [0..length ts - 1]]
--- je geeft de speler, vijanden en een random generator mee
+-- Je geeft de speler, vijanden en een random generator mee, de functie verandert willekeurig van 1 tank de richting en beweegt alle tanks
 moveTanks :: Tank -> [Tank] -> (Int, StdGen) -> [Tank]
-moveTanks t ts r = let ts' = changeDirection ts r in 
+moveTanks t ts r = let ts' = changeDirection ts r in
                     [moveTank x (tdir x) (t:ts')| x <- ts']
 
--- changeDirection :: [Direction] -> (Int, StdGen) -> [Direction]
--- changeDirection ed r = replaceN ed (fst r) $ randomDirection $ snd r
 changeDirection :: [Tank] -> (Int, StdGen) -> [Tank]
-changeDirection ts r = let toBeReplaced = (ts !! fst r) in 
+changeDirection ts r = let toBeReplaced = (ts !! fst r) in
                         Tank (center toBeReplaced) (randomDirection $ snd r) : delete toBeReplaced ts
 
 isBulletInBounds :: Bullet -> Bool
 isBulletInBounds b = isInBounds $ co b
 
--- moveBullets :: [Coord] -> [Direction] -> [Coord]
--- moveBullets b bd = [tuplesSum (b !! x) $ bd !! x | x <- [0..length b-1]]
 moveBullets :: [Bullet] -> [Bullet]
 moveBullets b = filter isBulletInBounds [TankBullet (tuplesSum (co x) $ dir x) (dir x) | x <- b]
 
@@ -128,84 +121,48 @@ randomDirection stdGen =
     let r = getRandomNumberInRange stdGen 0 $ length tankDirections - 1 in
         tankDirections !! fst r
 
-notHit :: [Bullet] -> Tank -> Bool 
+-- Gaat na of een tank geraakt is door een kogel
+notHit :: [Bullet] -> Tank -> Bool
 notHit b t = null $ getTankCoordinates t `intersect` [co x | x <- b]
 
 removeHitTanks :: [Tank] -> [Bullet] -> [Tank]
 removeHitTanks t b = filter (notHit b) t
 
-bulletHit :: [Tank] -> Bullet -> Bool 
-bulletHit t b = null $getEnemyTankCoordinates t `intersect` [co b]   
+-- Gaat na of een kogel een tank heeft geraakt
+bulletHit :: [Tank] -> Bullet -> Bool
+bulletHit t b = null $getEnemyTankCoordinates t `intersect` [co b]
 
+-- Verwijdert kogels die een tank hebben geraakt
 removeBullets :: [Bullet] -> [Tank] -> [Bullet]
 removeBullets b t = filter (bulletHit t) b
--- replaceN :: [a] -> Int -> a -> [a]
--- replaceN l 0 a = a:tail l
--- replaceN l n a = take(n-1) l ++ [a] ++ drop n l
-
--- removeN :: [a] -> Int -> [a]
--- removeN l 0 = tail l
--- removeN l n =  take(n-1) l ++ drop n l
-
--- argumenten in volgorde: de kogels, alle vijanden, de index van de geraakte vijand
--- destroyedTankIndex :: [Coord] -> [Coord] -> Int
--- destroyedTankIndex b ts = length $ takeWhile (==False) [ null (b `intersect` getTankCollisionZone x) | x <- ts]
 
 startGame :: (Int, StdGen) -> Game
 startGame = Tanks (Tank (0, bottom + 1) north) [Tank (-3, 6) south, Tank (3, 6) south] []
--- startGame = Tanks (Tank (0, bottom + 1) north) [Tank (-3, 6) south] []
 
 gamePic :: Game -> Picture
 gamePic (Tanks p e b r) =
     Pictures[emptyBoard, Pictures[drawCoord x | x <- getTankCoordinates p], Pictures[drawCoord x | x <- getEnemyTankCoordinates e],
     Pictures[drawCoord (co x) | x <- b]]
-gamePic (GameOver r s) = displayMessage $ "Score: " ++ show s
-
-co :: Bullet -> Coord
-co (TankBullet b bd) = b
-
-dir :: Bullet -> Coord
-dir (TankBullet b bd) = bd
-
-center :: Tank -> Coord
-center (Tank t d) = t
-
-tdir :: Tank -> Coord
-tdir (Tank t d) = d
 
 move :: Event -> Game -> Game
 move (EventKey (SpecialKey KeyLeft) Down _ _) (Tanks p e b r)   = Tanks (moveTank p west e) e b r
 move (EventKey (SpecialKey KeyRight) Down _ _) (Tanks p e b r)  = Tanks (moveTank p east e) e b r
 move (EventKey (SpecialKey KeyDown) Down _ _) (Tanks p e b r)   = Tanks (moveTank p south e) e b r
 move (EventKey (SpecialKey KeyUp) Down _ _) (Tanks p e b r)     = Tanks (moveTank p north e) e b r
-move (EventKey (SpecialKey KeySpace ) Down _ _) (Tanks p e b r) = Tanks p e (b ++ [TankBullet (shootBullet p) $ tdir p]) r
+move (EventKey (SpecialKey KeySpace ) Down _ _) (Tanks p e b r) = Tanks p e (b ++ [shootBullet p]) r
 move _ g                                                        = g
 
+-- Tanks sterven wanneer ze worden geraakt door eender welke kogel, het maakt niet uit door wie deze werd geschoten. 
+-- Dit wil zeggen dat vijandige tanks elkaar ook kunnen doden, en dat de speler zichzelf kan doden. Vijandige tanks kunnen zichzelf echter niet doden.
+-- Tanks kunnen niet tegen elkaar rijden, dit wordt geblokkeerd 
 next :: Float -> Game -> Game
--- next f (Tanks p e ed b r)
---     | null e = GameOver r 2
---     | or [co x `elem` concat [getTankCollisionZone e' | e' <- e] | x <- b] = Tanks p d (removeN e i) (removeN ed i) b r
---     | or [co x `elem` getTankCoordinates p d | x <- b] = GameOver r $ 2 - length e
---     | otherwise = Tanks p d (moveTanks p e ed) (changeDirection ed r') (moveBullets b) r'
---                     where r' = getRandomNumberInRange (snd r) 0 $ length e
---                          i = destroyedTankIndex b e
-next f (Tanks p e b r) 
-    | null e                                                             = GameOver r 2 --alle vijandige tanks zijn dood
-    | or [co x `elem` getTankCoordinates p | x <- b]                     = GameOver r' $ 2 - length e --speler wordt geraakt door een kogel
-    | or [co x `elem` concat [getTankCoordinates e' | e' <- e] | x <- b] = Tanks p (removeHitTanks e b) (moveBullets $ removeBullets b e) r'
-    | otherwise                                                          = Tanks p (moveTanks p e r'') (moveBullets b) r'
-        where r'  = getRandomNumberInRange (snd r) 0 100
-              r'' = getRandomNumberInRange (snd r') 0 $ length e-1
-next f g = g
-
-tanksMain :: IO ()
-tanksMain  = do
-        stdGen <- getStdGen
-        let r = getRandomNumberInRange stdGen 0 100
-        play (InWindow "UGent Tanks" (500, 800) (10, 10))
-             screenGreen -- de achtergrondkleur
-             2 -- aantal stappen per seconde
-             (startGame r) -- de beginwereld
-             gamePic -- de 'render'-functie, om naar scherm te tekenen
-             move -- de 'handle'-functie, om gebruiksinvoer te verwerken
-             next -- de 'step'-functie, om 1 tijdstap te laten passeren
+next f (Tanks p e b r)
+    | null e                                                             = GameOver r totalTanks --alle vijandige tanks zijn dood
+    | or [co x `elem` getTankCoordinates p | x <- b]                     = GameOver r' $ totalTanks - length e --speler wordt geraakt door een kogel
+    | or [co x `elem` concat [getTankCoordinates e' | e' <- e] | x <- b] = Tanks p (removeHitTanks e b) (moveBullets $ removeBullets b e) r' --vijandige tank wordt geraakt
+    | otherwise                                                          = Tanks p e' (moveBullets b ++ maybeShootBullet e' r''') r'
+        where r'   = getRandomNumberInRange (snd r) 0 100
+              r''  = getRandomNumberInRange (snd r') 0 $ length e-1
+              r''' = getRandomNumberInRange (snd r'') 0 $ length e-1
+              e'   = moveTanks p e r''
+next f g                                                                 = g
