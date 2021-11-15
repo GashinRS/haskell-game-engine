@@ -53,9 +53,9 @@ getNewAppleLocation :: Game -> Game
 getNewAppleLocation (Snake p d a r) = Snake p d a' r'
                                           where
                                             possible = getPossibleAppleLocations p
-                                            r' = getRandomNumberInRange (snd r) 0 $ length possible
-                                            a' = possible !! fst r'
-getNewAppleLocation (GameOver r s) = GameOver r s
+                                            r'       = getRandomNumberInRange (snd r) 0 $ length possible
+                                            a'       = possible !! fst r'
+getNewAppleLocation (GameOver r s)  = GameOver r s
 
 -- zorgt ervoor dat de slang niet in de omgekeerde richting kan gaan
 preventOppositeDirection :: Direction -> Direction -> Direction
@@ -68,10 +68,10 @@ preventOppositeDirection n o
 
 getOppositeDirection :: Direction -> Direction
 getOppositeDirection d
-  | d == north = south
-  | d == south = north
-  | d == west  = east
-  | d == east  = west
+  | d == north         = south
+  | d == south         = north
+  | d == west          = east
+  | d == east          = west
 getOppositeDirection _ = (0,0) --default waarde die normaal gezien nooit zal voorkomen
 
 lengthenSnake :: Direction -> [Coord] -> [Coord]
@@ -82,7 +82,7 @@ lengthenSnake d p
   | tuplesSum l east `elem` p  = p ++ [tuplesSum l west]
   | length p == 1              = p ++ [tuplesSum l $ getOppositeDirection d]
     where l = last p
-lengthenSnake d p = p --default waarde die normaal gezien nooit zal voorkomen
+lengthenSnake d p              = p --default waarde die normaal gezien nooit zal voorkomen
 
 startGame :: (Int, StdGen) -> Game
 startGame r = Snake [(0, 0)] north (getBoardCoordinates !! fst r ) r
@@ -90,7 +90,6 @@ startGame r = Snake [(0, 0)] north (getBoardCoordinates !! fst r ) r
 gamePic :: Game -> Picture
 gamePic (Snake p d a r) = Pictures[emptyBoard, Pictures[drawCoord x | x <- p], drawCoord a]
 
--- F5 wordt gebruikt om het spel opnieuw te starten
 move :: Event -> Game -> Game
 move (EventKey (SpecialKey KeyLeft) Down _ _) (Snake p d a r)    = Snake p (preventOppositeDirection west d) a r
 move (EventKey (SpecialKey KeyRight) Down _ _) (Snake p d a r)   = Snake p (preventOppositeDirection east d) a r

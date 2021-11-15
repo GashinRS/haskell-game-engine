@@ -20,7 +20,7 @@ startGame :: (Int, StdGen) -> Game
 startGame = Menu 0 
 
 gamePic :: Game -> Picture
-gamePic (Menu g r) = displayMessage $ games !! g
+gamePic (Menu g r)      = displayMessage $ games !! g
 gamePic (Tanks p e b r) = Tanks.gamePic $ Tanks p e b r
 gamePic (Snake s d a r) = Snake.gamePic $ Snake s d a r
 gamePic (GameOver r s)  = displayMessage $ "Score: " ++ show s
@@ -38,7 +38,7 @@ move (EventKey (SpecialKey KeyF5 ) Down _ _) (GameOver r s) = startGame r
 move _ g                                                    = g
 
 next :: Float -> Game -> Game
-next x (Menu g r) = Menu g r
+next x (Menu g r)      = Menu g r
 next x (Tanks p e b r) = Tanks.next x $ Tanks p e b r
 next x (Snake s d a r) = Snake.next x $ Snake s d a r
 next x g               = g

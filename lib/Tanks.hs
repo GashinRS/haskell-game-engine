@@ -63,6 +63,7 @@ tankDirections = [north, east, south, west]
 getTankCoordinates :: Tank -> [Coord]
 getTankCoordinates t = fmap (tuplesSum $ center t) (removeWindDirections $ tdir t) ++ [center t]
 
+-- Wordt gebruikt om de tank juist te tekenen door bepaalde windrichtingen niet te gebruiken bij het tekenen
 removeWindDirections :: Direction -> [Direction]
 removeWindDirections d
     | d == north = delete northWest $ delete northEast allDirections
@@ -70,6 +71,7 @@ removeWindDirections d
     | d == south = delete southEast $ delete southWest allDirections
     | d == west  = delete northWest $ delete southWest allDirections
 
+-- Doet hetzelfde als getTankCoordinates maar dan met een lijst van Tanks
 getEnemyTankCoordinates :: [Tank] -> [Coord]
 getEnemyTankCoordinates ts = concat [getTankCoordinates t | t <- ts]
 
@@ -93,6 +95,7 @@ maybeShootBullet ts r
 noTankCollision :: Tank -> [Tank] -> Bool
 noTankCollision t ts = null $ getTankCoordinates t `intersect` concat [getTankCoordinates t' | t' <- ts]
 
+-- Beweegt een tank in de gegeven richting, rekeninghoudend met dat de tank niet door muren en andere tanks kan gaan
 moveTank :: Tank -> Direction -> [Tank] -> Tank
 moveTank t d ts
     | let n   = Tank (tuplesSum (center t) d) d
@@ -106,6 +109,7 @@ moveTanks :: Tank -> [Tank] -> (Int, StdGen) -> [Tank]
 moveTanks t ts r = let ts' = changeDirection ts r in
                     [moveTank x (tdir x) (t:ts')| x <- ts']
 
+-- Verandert de richting van een tank
 changeDirection :: [Tank] -> (Int, StdGen) -> [Tank]
 changeDirection ts r = let toBeReplaced = (ts !! fst r) in
                         Tank (center toBeReplaced) (randomDirection $ snd r) : delete toBeReplaced ts
